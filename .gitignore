@@ -37,5 +37,3 @@ Gemfile.lock
 .env
 .env.*
 !.env.example
-
-*.gemspec

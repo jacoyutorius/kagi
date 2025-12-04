@@ -52,6 +52,17 @@ projects:
       profile: production-profile  # 特定環境のみ profile を上書き可能
 ```
 
+**または、`kagi add` コマンドで追加:**
+
+```bash
+# 対話式で追加
+kagi add myapp dev
+
+# オプション指定で追加
+kagi add myapp stg --secret-id kagi/myapp/stg
+kagi add myapp prd --secret-id kagi/myapp/prd --profile production-profile
+```
+
 ### 3. .env ファイルを生成
 
 ```bash
@@ -65,6 +76,14 @@ kagi download myapp dev --path .env.development.local
 kagi download myapp dev --path .env --force
 ```
 
+**設定なしで直接 Secret ID を指定:**
+
+```bash
+# --secret-id オプションで直接実行
+kagi download --secret-id kagi/myapp/dev
+kagi download --secret-id kagi/myapp/dev --path .env
+```
+
 ### 4. 環境変数をエクスポート
 
 ```bash
@@ -73,6 +92,12 @@ kagi import myapp dev
 
 # 現在のシェルに読み込む
 eval "$(kagi import myapp dev)"
+```
+
+**設定なしで直接 Secret ID を指定:**
+
+```bash
+kagi import --secret-id kagi/myapp/dev
 ```
 
 ### 5. プロジェクト一覧を表示
@@ -87,23 +112,61 @@ kagi list
 
 初期設定を行います。デフォルトの AWS Profile と Region を対話式で設定します。
 
-### `kagi download <project> <env>`
+### `kagi add <project> <env>`
+
+プロジェクト/環境を設定に追加します。対話式またはオプション指定で追加できます。
+
+**オプション:**
+- `--secret-id SECRET_ID` - Secret ID を指定
+- `--profile PROFILE` - AWS Profile を指定
+- `--region REGION` - AWS Region を指定
+
+**使用例:**
+```bash
+# 対話式
+kagi add myapp dev
+
+# オプション指定
+kagi add myapp prd --secret-id kagi/myapp/prd --profile prod-profile
+```
+
+### `kagi download [project] [env]`
 
 AWS Secrets Manager からシークレットを取得し、dotenv 形式で出力します。
 
 **オプション:**
+- `--secret-id SECRET_ID` - Secret ID を直接指定（この場合 project/env は不要）
 - `--path PATH` - 出力先ファイルパス
 - `--force` - 既存ファイルを上書き
 - `--profile PROFILE` - AWS Profile を指定 (設定を上書き)
 - `--region REGION` - AWS Region を指定 (設定を上書き)
 
-### `kagi import <project> <env>`
+**使用例:**
+```bash
+# 設定から取得
+kagi download myapp dev
+
+# Secret ID を直接指定
+kagi download --secret-id kagi/myapp/dev --path .env
+```
+
+### `kagi import [project] [env]`
 
 環境変数を export する形式で出力します。
 
 **オプション:**
+- `--secret-id SECRET_ID` - Secret ID を直接指定（この場合 project/env は不要）
 - `--profile PROFILE` - AWS Profile を指定
 - `--region REGION` - AWS Region を指定
+
+**使用例:**
+```bash
+# 設定から取得
+eval "$(kagi import myapp dev)"
+
+# Secret ID を直接指定
+eval "$(kagi import --secret-id kagi/myapp/dev)"
+```
 
 ### `kagi list`
 

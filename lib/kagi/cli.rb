@@ -41,16 +41,29 @@ module Kagi
       error "設定の保存に失敗しました: #{e.message}"
     end
 
-    desc "download PROJECT ENV", ".env ファイルを生成する"
+    desc "download [PROJECT] [ENV]", ".env ファイルを生成する"
+    option :secret_id, type: :string, desc: "Secret ID (直接指定)"
     option :path, type: :string, desc: "出力先ファイルパス"
     option :force, type: :boolean, default: false, desc: "既存ファイルを上書きする"
-    def download(project, env)
+    def download(project = nil, env = nil)
       config = Config.load
       
-      # AWS Profile/Region を解決
-      profile = Config.resolve_profile(config, project, env, options[:profile])
-      region = Config.resolve_region(config, project, env, options[:region])
-      secret_id = Config.get_secret_id(config, project, env)
+      # --secret-id が指定された場合は直接実行
+      if options[:secret_id]
+        secret_id = options[:secret_id]
+        profile = options[:profile] || config.dig("defaults", "profile") || "default"
+        region = options[:region] || config.dig("defaults", "region") || "ap-northeast-1"
+      else
+        # project/env が指定されていない場合はエラー
+        unless project && env
+          error "PROJECT と ENV を指定するか、--secret-id オプションを使用してください"
+        end
+
+        # AWS Profile/Region を解決
+        profile = Config.resolve_profile(config, project, env, options[:profile])
+        region = Config.resolve_region(config, project, env, options[:region])
+        secret_id = Config.get_secret_id(config, project, env)
+      end
 
       # シークレットを取得
       secrets = Secrets.fetch(secret_id, profile: profile, region: region)
@@ -70,14 +83,27 @@ module Kagi
       error "予期しないエラーが発生しました: #{e.message}"
     end
 
-    desc "import PROJECT ENV", "環境変数を export する形式で出力する"
-    def import(project, env)
+    desc "import [PROJECT] [ENV]", "環境変数を export する形式で出力する"
+    option :secret_id, type: :string, desc: "Secret ID (直接指定)"
+    def import(project = nil, env = nil)
       config = Config.load
       
-      # AWS Profile/Region を解決
-      profile = Config.resolve_profile(config, project, env, options[:profile])
-      region = Config.resolve_region(config, project, env, options[:region])
-      secret_id = Config.get_secret_id(config, project, env)
+      # --secret-id が指定された場合は直接実行
+      if options[:secret_id]
+        secret_id = options[:secret_id]
+        profile = options[:profile] || config.dig("defaults", "profile") || "default"
+        region = options[:region] || config.dig("defaults", "region") || "ap-northeast-1"
+      else
+        # project/env が指定されていない場合はエラー
+        unless project && env
+          error "PROJECT と ENV を指定するか、--secret-id オプションを使用してください"
+        end
+
+        # AWS Profile/Region を解決
+        profile = Config.resolve_profile(config, project, env, options[:profile])
+        region = Config.resolve_region(config, project, env, options[:region])
+        secret_id = Config.get_secret_id(config, project, env)
+      end
 
       # シークレットを取得
       secrets = Secrets.fetch(secret_id, profile: profile, region: region)
@@ -90,6 +116,58 @@ module Kagi
       error e.message
     rescue => e
       error "予期しないエラーが発生しました: #{e.message}"
+    end
+
+    desc "add PROJECT ENV", "プロジェクト/環境を設定に追加する"
+    option :secret_id, type: :string, desc: "Secret ID"
+    option :profile, type: :string, desc: "AWS Profile"
+    option :region, type: :string, desc: "AWS Region"
+    def add(project, env)
+      config = Config.load
+
+      # Secret ID を取得（オプションまたは対話式）
+      if options[:secret_id]
+        secret_id = options[:secret_id]
+      else
+        print "Secret ID: "
+        secret_id = $stdin.gets.chomp
+        if secret_id.empty?
+          error "Secret ID は必須です"
+        end
+      end
+
+      # Profile を取得（オプションまたは対話式）
+      if options[:profile]
+        profile = options[:profile]
+      else
+        current_profile = config.dig("defaults", "profile") || "default"
+        print "AWS Profile (default: #{current_profile}): "
+        input = $stdin.gets.chomp
+        profile = input.empty? ? nil : input
+      end
+
+      # Region を取得（オプションまたは対話式）
+      if options[:region]
+        region = options[:region]
+      else
+        current_region = config.dig("defaults", "region") || "ap-northeast-1"
+        print "AWS Region (default: #{current_region}): "
+        input = $stdin.gets.chomp
+        region = input.empty? ? nil : input
+      end
+
+      # 設定に追加
+      config = Config.add_project(config, project, env, 
+                                   secret_id: secret_id, 
+                                   profile: profile, 
+                                   region: region)
+      
+      # 保存
+      Config.save(config)
+
+      puts "✓ Added #{project}.#{env} to #{Config::CONFIG_PATH}"
+    rescue => e
+      error "プロジェクトの追加に失敗しました: #{e.message}"
     end
 
     desc "list", "プロジェクト一覧を表示する"

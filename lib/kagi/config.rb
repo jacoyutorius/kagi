@@ -73,5 +73,18 @@ module Kagi
 
       result
     end
+
+    # プロジェクト/環境を追加する
+    def add_project(config, project, env, secret_id:, profile: nil, region: nil)
+      config["projects"] ||= {}
+      config["projects"][project] ||= {}
+      config["projects"][project][env] = {
+        "secret_id" => secret_id
+      }
+      config["projects"][project][env]["profile"] = profile if profile
+      config["projects"][project][env]["region"] = region if region
+
+      config
+    end
   end
 end

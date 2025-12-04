@@ -185,4 +185,46 @@ RSpec.describe Kagi::Config do
       expect(result).to eq([])
     end
   end
+
+  describe ".add_project" do
+    it "プロジェクト/環境を追加する" do
+      config = {}
+      
+      result = described_class.add_project(config, "myapp", "dev", secret_id: "kagi/myapp/dev")
+      
+      expect(result["projects"]["myapp"]["dev"]["secret_id"]).to eq("kagi/myapp/dev")
+      expect(result["projects"]["myapp"]["dev"]["profile"]).to be_nil
+      expect(result["projects"]["myapp"]["dev"]["region"]).to be_nil
+    end
+
+    it "profile と region を指定して追加する" do
+      config = {}
+      
+      result = described_class.add_project(
+        config, "myapp", "prd", 
+        secret_id: "kagi/myapp/prd",
+        profile: "prod-profile",
+        region: "us-east-1"
+      )
+      
+      expect(result["projects"]["myapp"]["prd"]["secret_id"]).to eq("kagi/myapp/prd")
+      expect(result["projects"]["myapp"]["prd"]["profile"]).to eq("prod-profile")
+      expect(result["projects"]["myapp"]["prd"]["region"]).to eq("us-east-1")
+    end
+
+    it "既存のプロジェクトに新しい環境を追加する" do
+      config = {
+        "projects" => {
+          "myapp" => {
+            "dev" => { "secret_id" => "kagi/myapp/dev" }
+          }
+        }
+      }
+      
+      result = described_class.add_project(config, "myapp", "stg", secret_id: "kagi/myapp/stg")
+      
+      expect(result["projects"]["myapp"]["dev"]["secret_id"]).to eq("kagi/myapp/dev")
+      expect(result["projects"]["myapp"]["stg"]["secret_id"]).to eq("kagi/myapp/stg")
+    end
+  end
 end

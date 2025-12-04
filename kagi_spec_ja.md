@@ -162,6 +162,57 @@ compal.prd (secret_id=kagi/compal/prd)
 
 ---
 
+## 5. `kagi add <project> <env>`
+プロジェクト/環境を config.yml に追加する（**UX 改善機能**）。
+
+### 対話式で追加
+```
+$ kagi add compal dev
+Secret ID: kagi/compal/dev
+AWS Profile (default: default): 
+AWS Region (default: ap-northeast-1): 
+✓ Added compal.dev to ~/.config/kagi/config.yml
+```
+
+### オプション指定で追加
+```
+$ kagi add compal dev --secret-id kagi/compal/dev
+✓ Added compal.dev to ~/.config/kagi/config.yml
+
+$ kagi add compal prd --secret-id kagi/compal/prd --profile prod-profile --region us-east-1
+✓ Added compal.prd to ~/.config/kagi/config.yml
+```
+
+### オプション
+- `--secret-id SECRET_ID` - Secret ID を指定（必須）
+- `--profile PROFILE` - AWS Profile を指定（任意）
+- `--region REGION` - AWS Region を指定（任意）
+
+---
+
+## 6. `download` / `import` コマンドの `--secret-id` オプション
+設定なしで直接 Secret ID を指定して実行できる（**UX 改善機能**）。
+
+### download での使用例
+```
+$ kagi download --secret-id kagi/compal/dev
+DATABASE_URL=postgres://...
+RAILS_MASTER_KEY=xxxx
+
+$ kagi download --secret-id kagi/compal/dev --path .env --profile my-profile
+```
+
+### import での使用例
+```
+$ kagi import --secret-id kagi/compal/dev
+export DATABASE_URL='postgres://...'
+export RAILS_MASTER_KEY='xxxx'
+```
+
+**注意:** `--secret-id` を指定した場合、`<project>` `<env>` 引数は不要。
+
+---
+
 # 🏗 ディレクトリ構成（Gem 標準構成）
 
 ```
