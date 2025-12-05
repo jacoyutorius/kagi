@@ -1,3 +1,5 @@
+[![CI](https://github.com/jacoyutorius/kagi/actions/workflows/ci.yml/badge.svg)](https://github.com/jacoyutorius/kagi/actions/workflows/ci.yml)
+
 # Kagi 🔑
 
 AWS Secrets Manager から秘匿情報を取得して、ローカル開発環境向けの `.env` ファイルを生成する Ruby 製 CLI ツール。
