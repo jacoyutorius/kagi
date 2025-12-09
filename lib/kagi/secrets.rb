@@ -46,18 +46,23 @@ module Kagi
           ENV['AWS_SECRET_ACCESS_KEY'],
           ENV['AWS_SESSION_TOKEN']  # Session Token がない場合は nil になる
         )
+        
+        Aws::SecretsManager::Client.new(
+          region: region,
+          credentials: credentials
+        )
       else
-        # プロファイルを環境変数で指定し、AWS SDK のデフォルト認証情報チェーンに任せる
+        # プロファイルを指定して AWS SDK のデフォルト認証情報チェーンに任せる
         # これで aws login, aws sso login, ~/.aws/credentials の全てに対応
         $stderr.puts "DEBUG: AWS Profile '#{profile}' を使用します (AWS SDK のデフォルト認証情報チェーン)" if debug
-        ENV['AWS_PROFILE'] = profile unless profile == 'default'
-        credentials = nil
+        
+        # profile オプションを渡して Client を作成
+        # これで AWS SDK が自動的に適切な認証情報を見つける
+        Aws::SecretsManager::Client.new(
+          region: region,
+          profile: profile
+        )
       end
-
-      Aws::SecretsManager::Client.new(
-        region: region,
-        credentials: credentials
-      )
     end
   end
 end
