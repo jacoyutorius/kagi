@@ -8,8 +8,8 @@ module Kagi
     module_function
 
     # AWS Secrets Manager からシークレットを取得する
-    def fetch(secret_id, profile:, region:)
-      client = create_client(profile: profile, region: region)
+    def fetch(secret_id, profile:, region:, debug: false)
+      client = create_client(profile: profile, region: region, debug: debug)
 
       resp = client.get_secret_value(secret_id: secret_id)
       JSON.parse(resp.secret_string)
@@ -23,21 +23,36 @@ module Kagi
       raise SecretsError, "AWS 認証情報が見つかりません。AWS Profile '#{profile}' を確認してください。"
     rescue Aws::SecretsManager::Errors::ServiceError => e
       raise SecretsError, "AWS Secrets Manager エラー: #{e.message}"
-    rescue JSON::ParserError
-      raise SecretsError, "シークレットの JSON パースに失敗しました"
+    rescue JSON::ParserError => e
+      # デバッグ用に実際のシークレット内容を表示（先頭100文字のみ）
+      preview = resp.secret_string[0..100]
+      raise SecretsError, "シークレットの JSON パースに失敗しました。\n" \
+                          "シークレットは JSON 形式である必要があります。\n" \
+                          "実際の内容（先頭100文字）: #{preview.inspect}\n" \
+                          "パースエラー: #{e.message}"
     end
 
     # AWS クライアントを作成する
-    def create_client(profile:, region:)
+    def create_client(profile:, region:, debug: false)
+      # デバッグ: 環境変数の状態を確認
+      has_env_creds = ENV['AWS_ACCESS_KEY_ID'] && ENV['AWS_SECRET_ACCESS_KEY']
+      
       # 環境変数が設定されている場合は優先的に使用
-      credentials = if ENV['AWS_ACCESS_KEY_ID'] && ENV['AWS_SECRET_ACCESS_KEY']
-        # 環境変数から認証情報を取得（Session Token にも対応）
-        nil  # credentials を nil にすると AWS SDK が環境変数を自動的に使用
+      credentials = if has_env_creds
+        # 環境変数から明示的に認証情報を作成（Session Token にも対応）
+        $stderr.puts "DEBUG: 環境変数から認証情報を使用します" if debug
+        Aws::Credentials.new(
+          ENV['AWS_ACCESS_KEY_ID'],
+          ENV['AWS_SECRET_ACCESS_KEY'],
+          ENV['AWS_SESSION_TOKEN']  # Session Token がない場合は nil になる
+        )
       elsif profile == "default"
-        # default の場合も環境変数や IAM Role を優先
+        # default の場合は credentials を指定しない（IAM Role などを優先）
+        $stderr.puts "DEBUG: デフォルトの認証情報を使用します" if debug
         nil
       else
         # 指定されたプロファイルを使用
+        $stderr.puts "DEBUG: AWS Profile '#{profile}' を使用します" if debug
         Aws::SharedCredentials.new(profile_name: profile)
       end
 

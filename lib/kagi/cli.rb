@@ -7,12 +7,14 @@ module Kagi
     desc "import SECRET_ID", "環境変数を export する形式で出力する"
     option :profile, type: :string, desc: "AWS Profile", default: "default"
     option :region, type: :string, desc: "AWS Region", default: "ap-northeast-1"
+    option :debug, type: :boolean, desc: "デバッグログを表示", default: false
     def import(secret_id)
       profile = options[:profile]
       region = options[:region]
+      debug = options[:debug]
       
       # シークレットを取得
-      secrets = Secrets.fetch(secret_id, profile: profile, region: region)
+      secrets = Secrets.fetch(secret_id, profile: profile, region: region, debug: debug)
       
       # export 形式に変換
       export_content = EnvFormatter.to_exports(secrets)
@@ -29,12 +31,14 @@ module Kagi
     option :region, type: :string, desc: "AWS Region", default: "ap-northeast-1"
     option :path, type: :string, desc: "出力先ファイルパス"
     option :force, type: :boolean, default: false, desc: "既存ファイルを上書きする"
+    option :debug, type: :boolean, desc: "デバッグログを表示", default: false
     def download(secret_id)
       profile = options[:profile]
       region = options[:region]
+      debug = options[:debug]
       
       # シークレットを取得
-      secrets = Secrets.fetch(secret_id, profile: profile, region: region)
+      secrets = Secrets.fetch(secret_id, profile: profile, region: region, debug: debug)
       
       # dotenv 形式に変換
       env_content = EnvFormatter.to_env(secrets)
