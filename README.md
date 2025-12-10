@@ -2,26 +2,12 @@
 
 # Kagi 🔑
 
-AWS Secrets Manager から秘匿情報を取得して、ローカル開発環境向けの `.env` ファイルを生成する Ruby 製 CLI ツール。
-
-## 特徴
-
-- 🔐 **AWS Secrets Manager と統合** - 秘匿情報の一元管理
-- 🚀 **シンプルなコマンド** - Secret ID を直接指定するだけ
-- 💎 **Ruby 製** - AWS SDK を直接使用 (AWS CLI 不要)
-- 🔒 **安全** - `.env` ファイルを Git 管理せず、AWS IAM で権限制御
-- ⚡ **設定不要** - config.yml などの事前設定が不要
+AWS Secrets Manager から秘匿情報を取得して、ローカル開発環境向けの `.env` ファイルを生成する CLI ツール。
 
 ## インストール
 
 ```bash
 gem install kagi
-```
-
-または Gemfile に追加:
-
-```ruby
-gem 'kagi'
 ```
 
 ## 使い方
