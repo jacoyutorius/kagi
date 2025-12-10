@@ -26,45 +26,157 @@ gem 'kagi'
 
 ## 使い方
 
-### 基本的な使用方法
+### import と download の使い分け
 
-Secret ID を直接指定するだけで使えます:
+Kagi には2つのメインコマンドがあります:
+
+| コマンド | 用途 | 出力形式 | 使用例 |
+|---------|------|---------|--------|
+| `import` | シェルに環境変数を読み込む | `export KEY='value'` | `eval "$(kagi import ...)"` |
+| `download` | .env ファイルを生成 | `KEY=value` | `kagi download ... --path .env` |
+
+#### import の使い方
+
+現在のシェルセッションに環境変数を読み込みたい場合に使用します:
 
 ```bash
-# 環境変数を export 形式で出力
-kagi import compal/dev
+# シェルに環境変数を読み込む
+eval "$(kagi import myproject/dev)"
 
-# .env ファイルを生成
-kagi download compal/dev --path .env
+# 読み込まれた環境変数を確認
+echo $DATABASE_URL
 ```
 
-### AWS Profile を指定
+**ポイント:** `eval` を使って実行する必要があります。
+
+#### download の使い方
+
+`.env` ファイルとして保存したい場合に使用します:
+
+```bash
+# .env ファイルを生成
+kagi download myproject/dev --path .env
+
+# 既存ファイルを上書き
+kagi download myproject/dev --path .env --force
+
+# 標準出力に表示（ファイルに保存しない）
+kagi download myproject/dev
+```
+
+---
+
+### AWS 認証の設定
+
+Kagi は以下の認証方式に対応しています:
+
+#### 1. aws login を使う（推奨）
+
+2025年11月に追加された新しいブラウザベース認証です:
+
+```bash
+# ブラウザでログイン
+aws login
+
+# Kagi を実行（--profile 不要）
+eval "$(kagi import myproject/dev)"
+```
+
+**メリット:**
+- ブラウザで簡単にログイン
+- 一時的な認証情報で安全
+- 長期的なアクセスキー不要
+
+#### 2. AWS Profile を使う
 
 複数の AWS アカウントを使い分ける場合:
 
-```bash
-# AWS Profile を指定
-kagi import compal/dev --profile compal_user
+**Step 1: AWS Profile を設定**
 
-# Region も指定
-kagi import compal/dev --profile compal_user --region us-east-1
+`~/.aws/config` と `~/.aws/credentials` を作成:
+
+```bash
+# ~/.aws/config
+[profile myproject-dev]
+region = ap-northeast-1
+
+[profile myproject-prod]
+region = ap-northeast-1
 ```
 
-### ファイルへの出力
-
 ```bash
-# .env ファイルに保存
-kagi download compal/dev --path .env
+# ~/.aws/credentials
+[myproject-dev]
+aws_access_key_id = AKIA...
+aws_secret_access_key = ...
 
-# 既存ファイルを上書き
-kagi download compal/dev --path .env --force
+[myproject-prod]
+aws_access_key_id = AKIA...
+aws_secret_access_key = ...
 ```
 
-### シェルに環境変数を読み込む
+**Step 2: Kagi で Profile を指定**
 
 ```bash
-# 現在のシェルに環境変数を読み込む
-eval "$(kagi import compal/dev)"
+# 開発環境
+eval "$(kagi import myproject/dev --profile myproject-dev)"
+
+# 本番環境
+eval "$(kagi import myproject/prd --profile myproject-prod)"
+```
+
+#### 3. 環境変数を使う
+
+一時的な認証情報（Session Token 付き）を使う場合:
+
+```bash
+# 環境変数を設定
+export AWS_ACCESS_KEY_ID="ASIA..."
+export AWS_SECRET_ACCESS_KEY="..."
+export AWS_SESSION_TOKEN="..."
+
+# Kagi を実行（--profile 不要）
+eval "$(kagi import myproject/dev)"
+```
+
+**ポイント:** 環境変数が設定されている場合は、自動的に優先されます。
+
+---
+
+### よくある使い方
+
+#### パターン1: 開発環境で毎回使う
+
+```bash
+# シェルに環境変数を読み込む
+eval "$(kagi import myproject/dev --profile myproject-dev)"
+
+# アプリケーションを起動
+rails server
+```
+
+#### パターン2: .env ファイルを生成して Git 管理しない
+
+```bash
+# .env ファイルを生成
+kagi download myproject/dev --profile myproject-dev --path .env
+
+# .gitignore に追加
+echo ".env" >> .gitignore
+
+# アプリケーションを起動（.env を自動読み込み）
+npm run dev
+```
+
+#### パターン3: CI/CD で使う
+
+```bash
+# GitHub Actions などで環境変数を使用
+export AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
+export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+
+# Kagi で .env を生成
+kagi download myproject/prod --path .env
 ```
 
 ## コマンドリファレンス
@@ -83,13 +195,13 @@ eval "$(kagi import compal/dev)"
 **使用例:**
 ```bash
 # 最小限の使用
-kagi import compal/dev
+kagi import myproject/dev
 
 # AWS Profile を指定
-kagi import compal/dev --profile compal_user
+kagi import myproject/dev --profile myproject_user
 
 # シェルに読み込む
-eval "$(kagi import compal/dev)"
+eval "$(kagi import myproject/dev)"
 ```
 
 ### `kagi download <secret-id>`
@@ -108,13 +220,13 @@ AWS Secrets Manager からシークレットを取得し、dotenv 形式で出�
 **使用例:**
 ```bash
 # 標準出力に表示
-kagi download compal/dev
+kagi download myproject/dev
 
 # ファイルに保存
-kagi download compal/dev --path .env
+kagi download myproject/dev --path .env
 
 # AWS Profile を指定してファイルに保存
-kagi download compal/dev --profile compal_user --path .env
+kagi download myproject/dev --profile myproject_user --path .env
 ```
 
 ### `kagi version`
@@ -129,7 +241,7 @@ kagi version
 
 Secrets Manager では、1つの Secret に JSON 形式で環境変数を保存します:
 
-**SecretId:** `compal/dev`
+**SecretId:** `myproject/dev`
 
 **SecretString:**
 ```json
@@ -159,64 +271,7 @@ Kagi を使用するには、以下の IAM 権限が必要です:
 }
 ```
 
-## シェルエイリアスの活用
-
-頻繁に使う Secret ID はシェルのエイリアスに登録すると便利です:
-
-```bash
-# ~/.zshrc または ~/.bashrc
-alias kagi-compal-dev='kagi import compal/dev --profile compal_user'
-alias kagi-compal-stg='kagi import compal/stg --profile compal_user'
-```
-
-使用例:
-```bash
-# エイリアスで簡単に実行
-eval "$(kagi-compal-dev)"
-```
-
-## v0.1.x からの移行ガイド
-
-### 主な変更点
-
-v0.2.0 では、よりシンプルで直感的なインターフェースに変更されました:
-
-- ✅ **config.yml が不要に** - 事前設定なしで使用可能
-- ✅ **Secret ID を直接指定** - プロジェクト/環境の抽象化を廃止
-- ❌ **廃止されたコマンド**: `configure`, `add`, `list`
-
-### 移行方法
-
-**Before (v0.1.x):**
-```bash
-# 事前設定が必要
-kagi add compal dev --secret-id compal/dev --profile compal_user
-kagi import compal dev
-```
-
-**After (v0.2.0):**
-```bash
-# Secret ID を直接指定
-kagi import compal/dev --profile compal_user
-```
-
-### config.yml の確認
-
-v0.1.x で使用していた `~/.config/kagi/config.yml` から Secret ID を確認できます:
-
-```yaml
-# 旧 config.yml
-projects:
-  compal:
-    dev:
-      secret_id: compal/dev
-      profile: compal_user
-```
-
-この場合、新しいコマンドは:
-```bash
-kagi import compal/dev --profile compal_user
-```
+---
 
 ## 開発
 
@@ -250,7 +305,7 @@ bundle exec rspec --format documentation
 bundle exec exe/kagi --help
 
 # コマンドの実行
-bundle exec exe/kagi import compal/dev
+bundle exec exe/kagi import myproject/dev
 
 # バージョン確認
 bundle exec exe/kagi version
@@ -266,7 +321,7 @@ gem build kagi.gemspec
 gem install kagi-0.2.0.gem
 
 # インストール後は bundle exec なしで実行可能
-kagi import compal/dev
+kagi import myproject/dev
 
 # アンインストール
 gem uninstall kagi
