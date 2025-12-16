@@ -29,7 +29,7 @@ module Kagi
     desc "download SECRET_ID", ".env ファイルを生成する"
     option :profile, type: :string, desc: "AWS Profile", default: "default"
     option :region, type: :string, desc: "AWS Region", default: "ap-northeast-1"
-    option :path, type: :string, desc: "出力先ファイルパス"
+    option :path, type: :string, desc: "出力先ファイルパス", required: true
     option :force, type: :boolean, default: false, desc: "既存ファイルを上書きする"
     option :debug, type: :boolean, desc: "デバッグログを表示", default: false
     def download(secret_id)
@@ -43,12 +43,8 @@ module Kagi
       # dotenv 形式に変換
       env_content = EnvFormatter.to_env(secrets)
 
-      # 出力
-      if options[:path]
-        output_to_file(env_content, options[:path], options[:force])
-      else
-        puts env_content
-      end
+      # ファイルに出力
+      output_to_file(env_content, options[:path], options[:force])
     rescue SecretsError => e
       error e.message
     rescue => e

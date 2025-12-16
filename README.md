@@ -37,7 +37,7 @@ echo $DATABASE_URL
 
 #### download の使い方
 
-`.env` ファイルとして保存したい場合に使用します:
+`.env` ファイルとして保存する場合に使用します(`--path` は必須):
 
 ```bash
 # .env ファイルを生成
@@ -45,9 +45,6 @@ kagi download myproject/dev --path .env
 
 # 既存ファイルを上書き
 kagi download myproject/dev --path .env --force
-
-# 標準出力に表示（ファイルに保存しない）
-kagi download myproject/dev
 ```
 
 ---
@@ -192,27 +189,27 @@ eval "$(kagi import myproject/dev)"
 
 ### `kagi download <secret-id>`
 
-AWS Secrets Manager からシークレットを取得し、dotenv 形式で出力します。
+AWS Secrets Manager からシークレットを取得し、dotenv 形式でファイルに保存します。
 
 **引数:**
-- `<secret-id>` - AWS Secrets Manager の Secret ID（必須）
+- `<secret-id>` - AWS Secrets Manager の Secret ID(必須)
 
 **オプション:**
-- `--profile PROFILE` - AWS Profile を指定（デフォルト: `default`）
-- `--region REGION` - AWS Region を指定（デフォルト: `ap-northeast-1`）
-- `--path PATH` - 出力先ファイルパス
+- `--profile PROFILE` - AWS Profile を指定(デフォルト: `default`)
+- `--region REGION` - AWS Region を指定(デフォルト: `ap-northeast-1`)
+- `--path PATH` - 出力先ファイルパス(必須)
 - `--force` - 既存ファイルを上書き
 
 **使用例:**
 ```bash
-# 標準出力に表示
-kagi download myproject/dev
-
-# ファイルに保存
+# .env ファイルに保存
 kagi download myproject/dev --path .env
 
 # AWS Profile を指定してファイルに保存
 kagi download myproject/dev --profile myproject_user --path .env
+
+# 既存ファイルを上書き
+kagi download myproject/dev --path .env --force
 ```
 
 ### `kagi version`
