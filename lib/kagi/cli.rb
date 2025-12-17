@@ -4,11 +4,11 @@ require "thor"
 
 module Kagi
   class CLI < Thor
-    desc "import SECRET_ID", "環境変数を export する形式で出力する"
+    desc "show SECRET_ID", "環境変数を export する形式で出力する"
     option :profile, type: :string, desc: "AWS Profile", default: "default"
     option :region, type: :string, desc: "AWS Region", default: "ap-northeast-1"
     option :debug, type: :boolean, desc: "デバッグログを表示", default: false
-    def import(secret_id)
+    def show(secret_id)
       profile = options[:profile]
       region = options[:region]
       debug = options[:debug]
@@ -26,13 +26,13 @@ module Kagi
       error "予期しないエラーが発生しました: #{e.message}"
     end
 
-    desc "download SECRET_ID", ".env ファイルを生成する"
+    desc "export SECRET_ID", ".env ファイルを生成する"
     option :profile, type: :string, desc: "AWS Profile", default: "default"
     option :region, type: :string, desc: "AWS Region", default: "ap-northeast-1"
     option :path, type: :string, desc: "出力先ファイルパス", required: true
     option :force, type: :boolean, default: false, desc: "既存ファイルを上書きする"
     option :debug, type: :boolean, desc: "デバッグログを表示", default: false
-    def download(secret_id)
+    def export(secret_id)
       profile = options[:profile]
       region = options[:region]
       debug = options[:debug]

@@ -12,22 +12,22 @@ gem install kagi
 
 ## 使い方
 
-### import と download の使い分け
+### show と export の使い分け
 
 Kagi には2つのメインコマンドがあります:
 
 | コマンド | 用途 | 出力形式 | 使用例 |
 |---------|------|---------|--------|
-| `import` | シェルに環境変数を読み込む | `export KEY='value'` | `eval "$(kagi import ...)"` |
-| `download` | .env ファイルを生成 | `KEY=value` | `kagi download ... --path .env` |
+| `show` | シェルに環境変数を読み込む | `export KEY='value'` | `eval "$(kagi show ...)"` |
+| `export` | .env ファイルを生成 | `KEY=value` | `kagi export ... --path .env` |
 
-#### import の使い方
+#### show の使い方
 
 現在のシェルセッションに環境変数を読み込みたい場合に使用します:
 
 ```bash
 # シェルに環境変数を読み込む
-eval "$(kagi import myproject/dev)"
+eval "$(kagi show myproject/dev)"
 
 # 読み込まれた環境変数を確認
 echo $DATABASE_URL
@@ -35,16 +35,16 @@ echo $DATABASE_URL
 
 **ポイント:** `eval` を使って実行する必要があります。
 
-#### download の使い方
+#### export の使い方
 
 `.env` ファイルとして保存する場合に使用します(`--path` は必須):
 
 ```bash
 # .env ファイルを生成
-kagi download myproject/dev --path .env
+kagi export myproject/dev --path .env
 
 # 既存ファイルを上書き
-kagi download myproject/dev --path .env --force
+kagi export myproject/dev --path .env --force
 ```
 
 ---
@@ -62,7 +62,7 @@ Kagi は以下の認証方式に対応しています:
 aws login
 
 # Kagi を実行（--profile 不要）
-eval "$(kagi import myproject/dev)"
+eval "$(kagi show myproject/dev)"
 ```
 
 **メリット:**
@@ -102,10 +102,10 @@ aws_secret_access_key = ...
 
 ```bash
 # 開発環境
-eval "$(kagi import myproject/dev --profile myproject-dev)"
+eval "$(kagi show myproject/dev --profile myproject-dev)"
 
 # 本番環境
-eval "$(kagi import myproject/prd --profile myproject-prod)"
+eval "$(kagi show myproject/prd --profile myproject-prod)"
 ```
 
 #### 3. 環境変数を使う
@@ -119,7 +119,7 @@ export AWS_SECRET_ACCESS_KEY="..."
 export AWS_SESSION_TOKEN="..."
 
 # Kagi を実行（--profile 不要）
-eval "$(kagi import myproject/dev)"
+eval "$(kagi show myproject/dev)"
 ```
 
 **ポイント:** 環境変数が設定されている場合は、自動的に優先されます。
@@ -132,7 +132,7 @@ eval "$(kagi import myproject/dev)"
 
 ```bash
 # シェルに環境変数を読み込む
-eval "$(kagi import myproject/dev --profile myproject-dev)"
+eval "$(kagi show myproject/dev --profile myproject-dev)"
 
 # アプリケーションを起動
 rails server
@@ -142,7 +142,7 @@ rails server
 
 ```bash
 # .env ファイルを生成
-kagi download myproject/dev --profile myproject-dev --path .env
+kagi export myproject/dev --profile myproject-dev --path .env
 
 # .gitignore に追加
 echo ".env" >> .gitignore
@@ -159,12 +159,12 @@ export AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
 export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
 
 # Kagi で .env を生成
-kagi download myproject/prod --path .env
+kagi export myproject/prod --path .env
 ```
 
 ## コマンドリファレンス
 
-### `kagi import <secret-id>`
+### `kagi show <secret-id>`
 
 環境変数を export する形式で出力します。
 
@@ -178,16 +178,16 @@ kagi download myproject/prod --path .env
 **使用例:**
 ```bash
 # 最小限の使用
-kagi import myproject/dev
+kagi show myproject/dev
 
 # AWS Profile を指定
-kagi import myproject/dev --profile myproject_user
+kagi show myproject/dev --profile myproject_user
 
 # シェルに読み込む
-eval "$(kagi import myproject/dev)"
+eval "$(kagi show myproject/dev)"
 ```
 
-### `kagi download <secret-id>`
+### `kagi export <secret-id>`
 
 AWS Secrets Manager からシークレットを取得し、dotenv 形式でファイルに保存します。
 
@@ -203,13 +203,13 @@ AWS Secrets Manager からシークレットを取得し、dotenv 形式でフ�
 **使用例:**
 ```bash
 # .env ファイルに保存
-kagi download myproject/dev --path .env
+kagi export myproject/dev --path .env
 
 # AWS Profile を指定してファイルに保存
-kagi download myproject/dev --profile myproject_user --path .env
+kagi export myproject/dev --profile myproject_user --path .env
 
 # 既存ファイルを上書き
-kagi download myproject/dev --path .env --force
+kagi export myproject/dev --path .env --force
 ```
 
 ### `kagi version`
@@ -288,7 +288,7 @@ bundle exec rspec --format documentation
 bundle exec exe/kagi --help
 
 # コマンドの実行
-bundle exec exe/kagi import myproject/dev
+bundle exec exe/kagi show myproject/dev
 
 # バージョン確認
 bundle exec exe/kagi version
@@ -301,10 +301,10 @@ bundle exec exe/kagi version
 gem build kagi.gemspec
 
 # ローカルにインストール
-gem install kagi-0.2.0.gem
+gem install kagi-0.3.0.gem
 
 # インストール後は bundle exec なしで実行可能
-kagi import myproject/dev
+kagi show myproject/dev
 
 # アンインストール
 gem uninstall kagi
